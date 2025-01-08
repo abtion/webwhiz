@@ -1,0 +1,19 @@
+###################
+# DEVELOPMENT
+###################
+
+FROM node:18-alpine As development
+
+WORKDIR /usr/src/app
+
+COPY package*.json yarn.lock ./
+
+RUN yarn install
+
+COPY . .
+
+ENV NODE_ENV development
+
+EXPOSE 3000
+
+CMD ["yarn", "run", "start:dev"]
