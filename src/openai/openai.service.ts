@@ -145,14 +145,60 @@ export class OpenaiService {
         input,
         model: model,
       });
+      console.log('_________________ input', input);
+
       return res.data?.[0].embedding;
     } catch (err) {
       this.logger.error('OpenAI Embedding API error', err);
       this.logger.error('Error reponse', err?.response?.data);
-      console.log(err);
       throw err;
     }
   }
+
+  /**
+ * Categorize the user's question into "Package Status", "Shops", or "General Info".
+ * @param userContent The user's question as a string.
+ * @param openAiClient An instance of the OpenAI client.
+ * @returns The category as a string.
+ */
+  async getCategory(
+    userContent: string,
+    openAiClient: any,
+  ): Promise<string> {
+    try {
+      const response = await openAiClient.chat.completions.create({
+        model: 'gpt-3.5-turbo',
+        messages: [
+          {
+            role: 'system',
+            content: `
+              You are a categorization assistant. Your job is to categorize user questions into one of these three categories:
+              - "Package Status"
+              - "Shops"
+              - "General Info"
+
+              Rules:
+              - If the user is asking about the status of their package, if they have not received their package, if the package is delayed, or if they want to track their package, respond with "Package Status".
+              - If the user is asking about nearby shops or shop addresses, respond with "Shops".
+              - For all other cases, respond with "General Info".
+
+              Your response should only contain the category name and nothing else.
+            `,
+          },
+          {
+            role: 'user',
+            content: userContent,
+          },
+        ],
+        temperature: 0, // Ensure deterministic output
+      });
+
+      return response.choices[0].message.content.trim(); // Extract and return the category
+    } catch (error) {
+      console.error('Error in getCategory function:', error);
+      throw error;
+    }
+  };
 
   /**
    * Get completions from ChatGTP
@@ -163,6 +209,7 @@ export class OpenaiService {
     data: OpenAI.Chat.ChatCompletionCreateParamsNonStreaming,
     credentials?: AICredentials,
   ): Promise<ChatGTPResponse> {
+    // let category = '';
     // Get openAi client from the given keys
     credentials = credentials || this.defaultCredentials;
     const openAiClient = getOpenAiClient(credentials);
@@ -178,11 +225,28 @@ export class OpenaiService {
       throw new Error('Requests exceeded maximum rate');
     }
 
+    const userContent = Array.isArray(data.messages[0].content)
+      ? data.messages[0].content.join(' ') // Combine array elements into a string
+      : data.messages[0].content; 
+    
+    let category = await this.getCategory(userContent, openAiClient);
+    console.log('_________________ category', category);
+    
+
     // API Call
     try {
       const res = await openAiClient.chat.completions.create(data);
+      let chatResponse = res.choices[0].message.content;
+      if (category === 'Package Status') {
+        chatResponse = 'Please provide your tracking number so I can check the status of your package.';
+      } else if (category === 'Shops') { 
+        chatResponse = 'Please provide your address so I can find the nearest shops for you.';
+      } 
+
+      console.log('_________________ response', chatResponse);
+      
       return {
-        response: res.choices[0].message.content,
+        response: chatResponse,
         tokenUsage: {
           prompt: res.usage?.prompt_tokens,
           completion: res.usage?.completion_tokens,
@@ -195,6 +259,8 @@ export class OpenaiService {
       throw err;
     }
   }
+
+
 
   /**
    * Get streaming response from chatgpt
@@ -210,6 +276,9 @@ export class OpenaiService {
     ) => Promise<void>,
     credentials?: AICredentials,
   ) {
+
+   
+    
     // Get openAi client from the given keys
     credentials = credentials || this.defaultCredentials;
     const openAiClient = getOpenAiClient(credentials);
@@ -265,6 +334,7 @@ export class OpenaiService {
       }
       throw error;
     }
+    console.log('_________________ I believe this is the displayed answer', observable);
     return observable;
   }
 }
