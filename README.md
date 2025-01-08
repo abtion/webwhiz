@@ -89,24 +89,25 @@ Prerequisites
 Running Webwhiz with docker
 
 1. Clone the repo
-2. Edit the `.env.docker` file present in the root of the repo and add your `OPENAI_KEY` & `OPENAI_KEY_2`
-3. Use docker-compose to start the stack
+2. Create `.env.docker.local` in the root and copy the .env.docker into it and add your `OPENAI_KEY` & `OPENAI_KEY_2` (take those from OpenAI in 1Password)
+3. Use docker compose up to start the stack
+4. The chatbot opens at http://localhost:3030
 
 ```bash
 # Bring up webwhiz
 # Once the building is done and webwhiz starts the UI will be available at
 # http://localhost:3030, backend is available at http://localhost:3000
 # To exit Press Ctrl-C
-docker-compose up
+docker compose up
 
 # Alternatively Run webwhiz as a daemon
-docker-compose up -d
+docker compose up -d
 
 # Stop Webwhiz
-docker-compose down
+docker compose down
 
 # Force rebuild all containers (required only if some change is not picked up)
-sudo docker-compose up --build --force-recreate
+sudo docker compose up --build --force-recreate
 ```
 
 3. Configure `widget/nginx-variables.conf`.
