@@ -19,6 +19,26 @@ const keyHash = (key: string) => {
   return (keyHashCache[key] = createHash('md5').update(key).digest('hex'));
 };
 
+type Haendelser = {
+  tidspunkt: string;
+  haendelse: string;
+  beskrivelse: string;
+  pakketype: string;
+  sted: string;
+};
+
+type Afhentningssted = {
+  navn: string;
+  adresse: string;
+  postnr: string;
+};
+
+type TrackingApiData = {
+  afhentningssted?: Afhentningssted;
+  afsender?: string;
+  haendelser?: Array<Haendelser>;
+};
+
 export interface ChatGTPResponse {
   response: string;
   tokenUsage: {
@@ -26,6 +46,7 @@ export interface ChatGTPResponse {
     completion: number;
     total: number;
   };
+  trackingApiData: TrackingApiData;
 }
 
 export type ChatGptPromptMessages =
@@ -189,22 +210,17 @@ export class OpenaiService {
       
       const regex = /\b(?:\d{9}|7\d{12}|00057\d{15})\b/g;
       const matches = analyzedInput.match(regex);
-      if (!matches) return;
+      if (!matches) return null;
 
       return matches[0];
   }
 
-  async fetchTrackingInformation(trackingNumber: string) { 
-    console.log('----------------Parsed Input:', trackingNumber);
+  async fetchTrackingInformation(trackingNumber: string): Promise<any> {
+    if (!trackingNumber) return null;
+   
+    const apiUrl = "https://api.dao.as/TrackNTrace_v2.php?kundeid=5199&kode=iae3yckdoqua&stregkode=" + trackingNumber;
 
-    const baseUrl = "https://api.dao.as/TrackNTrace_v2.php?kundeid=5199&kode=iae3yckdoqua&stregkode="
-    
-    if (typeof trackingNumber === 'string') { 
-      
-      const apiUrl = baseUrl + trackingNumber;
-
-      try {
-      // Fetch request to the API
+    try {
       const response = await fetch(apiUrl, {
         method: 'GET',
         headers: {
@@ -216,16 +232,11 @@ export class OpenaiService {
         throw new Error(`API request failed with status ${response.status}`);
       }
 
-      const apiData = await response.json(); // Parse JSON response
-      console.log('----------------API Response:', apiData);
-
-      // Process the API data if needed (e.g., add it to ChatGPT response)
+      return await response.json();
     } catch (error) {
       console.error('Error fetching tracking information:', error);
       throw error;
     }
-    }
-    
   }
 
   /**
@@ -245,7 +256,8 @@ export class OpenaiService {
     console.log('----------------User Input:', lastUserMessage);
     const analyzedInput = await this.analyzeUserInput(lastUserMessage, openAiClient);
     const trackingNumber = this.getTrackingNumber(analyzedInput);
-    this.fetchTrackingInformation(trackingNumber);
+    
+    const apiData = await this.fetchTrackingInformation(trackingNumber);
     
     // Rate limiter check
     try {
@@ -262,6 +274,25 @@ export class OpenaiService {
     try {
       const res = await openAiClient.chat.completions.create(data);
       let chatResponse = res.choices[0].message.content;
+
+      const trackingApiData = {};
+      
+      if (apiData) {
+        const {
+          resultat: {
+            afhentningssted,
+            afsender,
+            haendelser
+          }
+        } = apiData;
+        console.log("============================ EXPECT TO SEE THIS ============================");
+
+        trackingApiData['afhentningssted'] = afhentningssted;
+        trackingApiData['afsender'] = afsender;
+        trackingApiData['haendelser'] = haendelser;
+      }
+
+      console.log('----------------ChatGPT Response:', chatResponse);
       
       return {
         response: chatResponse,
@@ -270,6 +301,7 @@ export class OpenaiService {
           completion: res.usage?.completion_tokens,
           total: res.usage?.total_tokens,
         },
+        trackingApiData
       };
     } catch (err) {
       this.logger.error('OpenAI ChatCompletion API error', err);

@@ -395,6 +395,7 @@ export class ChatbotService {
       msg: null,
       sender: null,
       sessionId: sessionId,
+      apiData: answer.trackingApiData
     };
     await this.updateSessionDataWithNewMsg(sessionData, msg);
 
