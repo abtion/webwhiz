@@ -145,7 +145,6 @@ export class OpenaiService {
         input,
         model: model,
       });
-      console.log('_________________ input', input);
 
       return res.data?.[0].embedding;
     } catch (err) {
@@ -160,10 +159,7 @@ export class OpenaiService {
  * @param input The user's question as a string.
  * @returns The category as a string.
  */
-  async analyzeUserInput(input: any, credentials?: AICredentials): Promise<string> {
-    // Get openAi client from the given keys
-    credentials = credentials || this.defaultCredentials;
-    const openAiClient = getOpenAiClient(credentials);
+  async analyzeUserInput(input: any, openAiClient:OpenAI): Promise<string> {
 
     const prompt = `
       The user has entered the following input:
@@ -180,12 +176,56 @@ export class OpenaiService {
       });
 
       const result = response.choices[0]?.message?.content?.trim();
+      console.log('----------------Analyzed Input:', result);
 
       return result 
     } catch (error) {
       console.error('Error analyzing user input:', error);
       throw error;
     }
+  }
+
+  getTrackingNumber(analyzedInput: string): undefined | string {
+      
+      const regex = /\b(?:\d{9}|7\d{12}|00057\d{15})\b/g;
+      const matches = analyzedInput.match(regex);
+      if (!matches) return;
+
+      return matches[0];
+  }
+
+  async fetchTrackingInformation(trackingNumber: string) { 
+    console.log('----------------Parsed Input:', trackingNumber);
+
+    const baseUrl = "https://api.dao.as/TrackNTrace_v2.php?kundeid=5199&kode=iae3yckdoqua&stregkode="
+    
+    if (typeof trackingNumber === 'string') { 
+      
+      const apiUrl = baseUrl + trackingNumber;
+
+      try {
+      // Fetch request to the API
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`API request failed with status ${response.status}`);
+      }
+
+      const apiData = await response.json(); // Parse JSON response
+      console.log('----------------API Response:', apiData);
+
+      // Process the API data if needed (e.g., add it to ChatGPT response)
+    } catch (error) {
+      console.error('Error fetching tracking information:', error);
+      throw error;
+    }
+    }
+    
   }
 
   /**
@@ -203,8 +243,9 @@ export class OpenaiService {
 
     const lastUserMessage = data.messages[data.messages.length - 1]?.content;
     console.log('----------------User Input:', lastUserMessage);
-    const isTrackingQuery = await this.analyzeUserInput(lastUserMessage, credentials);
-    console.log('----------------isTrackingQuery:', isTrackingQuery);
+    const analyzedInput = await this.analyzeUserInput(lastUserMessage, openAiClient);
+    const trackingNumber = this.getTrackingNumber(analyzedInput);
+    this.fetchTrackingInformation(trackingNumber);
     
     // Rate limiter check
     try {
@@ -236,8 +277,6 @@ export class OpenaiService {
       throw err;
     }
   }
-
-
 
   /**
    * Get streaming response from chatgpt
