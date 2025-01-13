@@ -66,7 +66,7 @@ export class ChatbotService {
     @Inject(REDIS) private redis: Redis,
     @Inject(forwardRef(() => WebSocketChatGateway))
     private webSocketChatGateway: WebSocketChatGateway,
-  ) { }
+  ) {}
 
   private async putChatSessionDataToCache(sessionData: ChatSession) {
     return this.redis.set(
@@ -305,7 +305,6 @@ export class ChatbotService {
     if (!sessionData) {
       throw new HttpException('Invalid Session Id', HttpStatus.NOT_FOUND);
     }
-
     // The maxMessages field is introduced newly and will not be available for old sessions. So,
     // if the maxMessages field is not available, then we will fetch the subscription plan for the user
     // and get the maxMessages from there. Then save it to the sessionData for future use.

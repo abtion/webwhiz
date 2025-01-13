@@ -180,8 +180,7 @@ export class OpenaiService {
  * @param input The user's question as a string.
  * @returns The category as a string.
  */
-  async analyzeUserInput(input: any, openAiClient:OpenAI): Promise<string> {
-
+  async analyzeUserInput(input: any, openAiClient: OpenAI): Promise<string> {
     const prompt = `
       The user has entered the following input:
       "${input}"
@@ -199,7 +198,7 @@ export class OpenaiService {
       const result = response.choices[0]?.message?.content?.trim();
       console.log('----------------Analyzed Input:', result);
 
-      return result 
+      return result;
     } catch (error) {
       console.error('Error analyzing user input:', error);
       throw error;
@@ -207,7 +206,6 @@ export class OpenaiService {
   }
 
   getTrackingNumber(analyzedInput: string): undefined | string {
-      
       const regex = /\b(?:\d{9}|7\d{12}|00057\d{15})\b/g;
       const matches = analyzedInput.match(regex);
       if (!matches) return null;
@@ -218,7 +216,9 @@ export class OpenaiService {
   async fetchTrackingInformation(trackingNumber: string): Promise<any> {
     if (!trackingNumber) return null;
    
-    const apiUrl = "https://api.dao.as/TrackNTrace_v2.php?kundeid=5199&kode=iae3yckdoqua&stregkode=" + trackingNumber;
+    const apiUrl =
+      'https://api.dao.as/TrackNTrace_v2.php?kundeid=5199&kode=iae3yckdoqua&stregkode=' +
+      trackingNumber;
 
     try {
       const response = await fetch(apiUrl, {
@@ -253,8 +253,10 @@ export class OpenaiService {
     const openAiClient = getOpenAiClient(credentials);
 
     const lastUserMessage = data.messages[data.messages.length - 1]?.content;
-    console.log('----------------User Input:', lastUserMessage);
-    const analyzedInput = await this.analyzeUserInput(lastUserMessage, openAiClient);
+    const analyzedInput = await this.analyzeUserInput(
+      lastUserMessage,
+      openAiClient,
+    );
     const trackingNumber = this.getTrackingNumber(analyzedInput);
     
     const apiData = await this.fetchTrackingInformation(trackingNumber);
@@ -324,7 +326,6 @@ export class OpenaiService {
     ) => Promise<void>,
     credentials?: AICredentials,
   ) {
-    
     // Get openAi client from the given keys
     credentials = credentials || this.defaultCredentials;
     const openAiClient = getOpenAiClient(credentials);
