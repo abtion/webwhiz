@@ -51,11 +51,13 @@ export class OpenaiChatbotService {
     this.logger = new Logger(OpenaiChatbotService.name);
   }
 
-  private getCustomCredentials(customKeys?: CustomKeyData): AICredentials | undefined {
+  private getCustomCredentials(
+    customKeys?: CustomKeyData,
+  ): AICredentials | undefined {
     if (!customKeys?.useOwnKey) return undefined;
 
     const keys = this.customKeyService.decryptCustomKeys(customKeys?.keys);
-    return { type: 'openai', keys }
+    return { type: 'openai', keys };
   }
 
   /** *******************************************

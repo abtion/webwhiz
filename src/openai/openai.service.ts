@@ -145,12 +145,75 @@ export class OpenaiService {
         input,
         model: model,
       });
+
       return res.data?.[0].embedding;
     } catch (err) {
       this.logger.error('OpenAI Embedding API error', err);
       this.logger.error('Error reponse', err?.response?.data);
-      console.log(err);
       throw err;
+    }
+  }
+
+  /**
+   * Categorize the user's question into "Package Status", "Shops", or "General Info".
+   * @param input The user's question as a string.
+   * @returns The category as a string.
+   */
+  async analyzeUserInput(input: any, openAiClient: OpenAI): Promise<string> {
+    const prompt = `
+      The user has entered the following input:
+      "${input}"
+
+      Determine whether the input relates to package tracking or tracking numbers (e.g., questions about shipments, delivery, or tracking numbers). Respond with "Provide tracking number" if it is related to tracking, but does not have a number consisting of 6 or more digits, if the user have provided a number respond with the provided number.
+      `;
+
+    try {
+      const response = await openAiClient.chat.completions.create({
+        model: 'gpt-4', // Or use another model
+        messages: [{ role: 'system', content: prompt }],
+        temperature: 0, // To make the response more deterministic
+      });
+
+      const result = response.choices[0]?.message?.content?.trim();
+
+      return result;
+    } catch (error) {
+      console.error('Error analyzing user input:', error);
+      throw error;
+    }
+  }
+
+  getTrackingNumber(analyzedInput: string): undefined | string {
+    const regex = /\b(?:\d{9}|7\d{12}|00057\d{15})\b/g;
+    const matches = analyzedInput.match(regex);
+    if (!matches) return null;
+
+    return matches[0];
+  }
+
+  async fetchTrackingInformation(trackingNumber: string): Promise<any> {
+    if (!trackingNumber) return null;
+
+    const apiUrl =
+      'https://api.dao.as/TrackNTrace_v2.php?kundeid=5199&kode=iae3yckdoqua&stregkode=' +
+      trackingNumber;
+
+    try {
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`API request failed with status ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching tracking information:', error);
+      throw error;
     }
   }
 
@@ -167,6 +230,27 @@ export class OpenaiService {
     credentials = credentials || this.defaultCredentials;
     const openAiClient = getOpenAiClient(credentials);
 
+    const lastUserMessage = data.messages[data.messages.length - 1]?.content;
+
+    const analyzedInput = await this.analyzeUserInput(
+      lastUserMessage,
+      openAiClient,
+    );
+    const trackingNumber = this.getTrackingNumber(analyzedInput);
+
+    const apiData = await this.fetchTrackingInformation(trackingNumber);
+
+    if (apiData) {
+      const {
+        resultat: { afhentningssted, afsender, haendelser },
+      } = apiData;
+
+      data.messages.push({
+        content: JSON.stringify({ afhentningssted, afsender, haendelser }),
+        role: 'system',
+      });
+    }
+
     // Rate limiter check
     try {
       await this.rateLimiter.consume(
@@ -181,8 +265,10 @@ export class OpenaiService {
     // API Call
     try {
       const res = await openAiClient.chat.completions.create(data);
+      const chatResponse = res.choices[0].message.content;
+
       return {
-        response: res.choices[0].message.content,
+        response: chatResponse,
         tokenUsage: {
           prompt: res.usage?.prompt_tokens,
           completion: res.usage?.completion_tokens,
