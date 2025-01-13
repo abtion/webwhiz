@@ -394,8 +394,8 @@ export class ChatbotService {
       msg: null,
       sender: null,
       sessionId: sessionId,
-      apiData: answer.trackingApiData
     };
+
     await this.updateSessionDataWithNewMsg(sessionData, msg);
 
     const sources = topChunks
@@ -785,11 +785,11 @@ export class ChatbotService {
       data.query,
       data.context.map(
         (c) =>
-        ({
-          content: c,
-          score: 0.9,
-          url: 'http://test',
-        } as any),
+          ({
+            content: c,
+            score: 0.9,
+            url: 'http://test',
+          } as any),
       ),
       data.prevMessages as any,
       data.defaultAnswer,

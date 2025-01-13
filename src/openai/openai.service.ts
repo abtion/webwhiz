@@ -19,26 +19,6 @@ const keyHash = (key: string) => {
   return (keyHashCache[key] = createHash('md5').update(key).digest('hex'));
 };
 
-type Haendelser = {
-  tidspunkt: string;
-  haendelse: string;
-  beskrivelse: string;
-  pakketype: string;
-  sted: string;
-};
-
-type Afhentningssted = {
-  navn: string;
-  adresse: string;
-  postnr: string;
-};
-
-type TrackingApiData = {
-  afhentningssted?: Afhentningssted;
-  afsender?: string;
-  haendelser?: Array<Haendelser>;
-};
-
 export interface ChatGTPResponse {
   response: string;
   tokenUsage: {
@@ -46,7 +26,6 @@ export interface ChatGTPResponse {
     completion: number;
     total: number;
   };
-  trackingApiData: TrackingApiData;
 }
 
 export type ChatGptPromptMessages =
@@ -175,11 +154,11 @@ export class OpenaiService {
     }
   }
 
-   /**
- * Categorize the user's question into "Package Status", "Shops", or "General Info".
- * @param input The user's question as a string.
- * @returns The category as a string.
- */
+  /**
+   * Categorize the user's question into "Package Status", "Shops", or "General Info".
+   * @param input The user's question as a string.
+   * @returns The category as a string.
+   */
   async analyzeUserInput(input: any, openAiClient: OpenAI): Promise<string> {
     const prompt = `
       The user has entered the following input:
@@ -196,7 +175,6 @@ export class OpenaiService {
       });
 
       const result = response.choices[0]?.message?.content?.trim();
-      console.log('----------------Analyzed Input:', result);
 
       return result;
     } catch (error) {
@@ -206,16 +184,16 @@ export class OpenaiService {
   }
 
   getTrackingNumber(analyzedInput: string): undefined | string {
-      const regex = /\b(?:\d{9}|7\d{12}|00057\d{15})\b/g;
-      const matches = analyzedInput.match(regex);
-      if (!matches) return null;
+    const regex = /\b(?:\d{9}|7\d{12}|00057\d{15})\b/g;
+    const matches = analyzedInput.match(regex);
+    if (!matches) return null;
 
-      return matches[0];
+    return matches[0];
   }
 
   async fetchTrackingInformation(trackingNumber: string): Promise<any> {
     if (!trackingNumber) return null;
-   
+
     const apiUrl =
       'https://api.dao.as/TrackNTrace_v2.php?kundeid=5199&kode=iae3yckdoqua&stregkode=' +
       trackingNumber;
@@ -253,14 +231,26 @@ export class OpenaiService {
     const openAiClient = getOpenAiClient(credentials);
 
     const lastUserMessage = data.messages[data.messages.length - 1]?.content;
+
     const analyzedInput = await this.analyzeUserInput(
       lastUserMessage,
       openAiClient,
     );
     const trackingNumber = this.getTrackingNumber(analyzedInput);
-    
+
     const apiData = await this.fetchTrackingInformation(trackingNumber);
-    
+
+    if (apiData) {
+      const {
+        resultat: { afhentningssted, afsender, haendelser },
+      } = apiData;
+
+      data.messages.push({
+        content: JSON.stringify({ afhentningssted, afsender, haendelser }),
+        role: 'system',
+      });
+    }
+
     // Rate limiter check
     try {
       await this.rateLimiter.consume(
@@ -275,27 +265,8 @@ export class OpenaiService {
     // API Call
     try {
       const res = await openAiClient.chat.completions.create(data);
-      let chatResponse = res.choices[0].message.content;
+      const chatResponse = res.choices[0].message.content;
 
-      const trackingApiData = {};
-      
-      if (apiData) {
-        const {
-          resultat: {
-            afhentningssted,
-            afsender,
-            haendelser
-          }
-        } = apiData;
-        console.log("============================ EXPECT TO SEE THIS ============================");
-
-        trackingApiData['afhentningssted'] = afhentningssted;
-        trackingApiData['afsender'] = afsender;
-        trackingApiData['haendelser'] = haendelser;
-      }
-
-      console.log('----------------ChatGPT Response:', chatResponse);
-      
       return {
         response: chatResponse,
         tokenUsage: {
@@ -303,7 +274,6 @@ export class OpenaiService {
           completion: res.usage?.completion_tokens,
           total: res.usage?.total_tokens,
         },
-        trackingApiData
       };
     } catch (err) {
       this.logger.error('OpenAI ChatCompletion API error', err);
