@@ -211,7 +211,7 @@ export class OpenaiService {
     if (obj.street === '' || obj.streetNumber === '' || obj.zip === '')
       return null;
 
-    const apiUrl = `https://api.dao.as/DAOPakkeshop/FindPakkeshop.php?kundeid=5199&kode=iae3yckdoqua&postnr=${obj.zip}&adresse=${obj.street}%${obj.streetNumber}}&format=json&antal=5`;
+    const apiUrl = `https://api.dao.as/DAOPakkeshop/FindPakkeshop.php?kundeid=${process.env.DAO_API_URL_CUSTOMER_ID}&kode=${process.env.DAO_API_URL_CODE}&postnr=${obj.zip}&adresse=${obj.street}%${obj.streetNumber}}&format=json&antal=5`;
 
     try {
       const response = await fetch(apiUrl, {
@@ -243,9 +243,7 @@ export class OpenaiService {
   async fetchTrackingInformation(trackingNumber: string): Promise<any> {
     if (!trackingNumber) return null;
 
-    const apiUrl =
-      'https://api.dao.as/TrackNTrace_v2.php?kundeid=5199&kode=iae3yckdoqua&stregkode=' +
-      trackingNumber;
+    const apiUrl = `https://api.dao.as/TrackNTrace_v2.php?kundeid=${process.env.DAO_API_URL_CUSTOMER_ID}&kode=${process.env.DAO_API_URL_CODE}&stregkode=${trackingNumber}`;
 
     try {
       const response = await fetch(apiUrl, {
