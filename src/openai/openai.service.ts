@@ -159,12 +159,15 @@ export class OpenaiService {
    * @param input The user's question as a string.
    * @returns The category as a string.
    */
-  async analyzeUserInput(input: any, openAiClient: OpenAI): Promise<string> {
+  async analyzeChatConversation(
+    input: any,
+    openAiClient: OpenAI,
+  ): Promise<string> {
     const prompt = `
       The chat history is: "${input}".
       Determine whether any content in the chat history relates to package tracking or tracking numbers (e.g., questions about shipments, delivery, or tracking numbers) or address (e.g., questions about pickup address relative to user address).
       Respond with "Provide tracking number" if it is related to tracking, but does not have a number consisting of 6 or more digits, if the user have provided a number respond with the provided number.
-      If any content in the chat history is related to an address, respond with the address in this format: {address:"[STREETNAME] + [optional STREETNUMBER]",zip:"[ZIPCODE]"} (e.g., street:"Grækenlandsvej 100",zip:"2300").
+      If any content in the chat history is related to an address, respond with the address in this format: {street:"[STREETNAME]", streetNumber:"[STREETNUMBER]" ,zip:"[ZIPCODE]"} (e.g., street:"Grækenlandsvej", streetNumber: "100",zip:"2300").
       If only the street name is provided, and the zip code was previously mentioned respond with street and zip in before mentioned address format.
       If only the zip code is provided, and the street name was previously mentioned respond with street and zip in before mentioned address format.
       `;
@@ -188,27 +191,27 @@ export class OpenaiService {
   getAddress(analyzedInput: string): {
     id: string;
     street: string;
-    number: string;
+    streetNumber: string;
     zip: string;
   } {
-    const regex = /street:"(.*?)",number:"(.*?)",zip:"(.*?)"/g;
+    const regex =
+      /street:\s*"(.*?)"\s*,\s*streetNumber:\s*"(.*?)"\s*,\s*zip:\s*"(.*?)"/;
     const matches = regex.exec(analyzedInput);
-    if (!matches)
-      return { id: 'pakkeshopData', street: '', number: '', zip: '' };
 
-    const [, street, number, zip] = matches;
-    return { id: 'pakkeshopData', street, number, zip };
+    if (!matches) {
+      return { id: 'pakkeshopData', street: '', streetNumber: '', zip: '' };
+    }
+
+    const [, street, streetNumber, zip] = matches;
+
+    return { id: 'pakkeshopData', street, streetNumber, zip };
   }
 
-  async fetchPakkeshopInformation(obj: {
-    street: string;
-    number?: string;
-    zip: string;
-  }): Promise<any> {
-    if (obj.street === '' || obj.zip === '') return null;
+  async fetchPakkeshopInformation(obj): Promise<any> {
+    if (obj.street === '' || obj.streetNumber === '' || obj.zip === '')
+      return null;
 
-    const adresse = obj.number ? `${obj.street} ${obj.number}` : obj.street;
-    const apiUrl = `https://api.dao.as/DAOPakkeshop/FindPakkeshop.php?kundeid=5199&kode=iae3yckdoqua&postnr=${obj.zip}&adresse=${adresse}&format=json&antal=5`;
+    const apiUrl = `https://api.dao.as/DAOPakkeshop/FindPakkeshop.php?kundeid=5199&kode=iae3yckdoqua&postnr=${obj.zip}&adresse=${obj.street}%${obj.streetNumber}}&format=json&antal=5`;
 
     try {
       const response = await fetch(apiUrl, {
@@ -276,53 +279,31 @@ export class OpenaiService {
     credentials = credentials || this.defaultCredentials;
     const openAiClient = getOpenAiClient(credentials);
 
-    // const lastUserMessage = data.messages[data.messages.length - 1]?.content;
-
-    const addressInHistory = data.messages.reduce(
-      (acc, m) => {
-        if (m.role === 'system') {
-          const content = m.content as string;
-          const streetMatch = content.match(/street:"([^"]+)"/);
-          const numberMatch = content.match(/number:"([^"]+)"/);
-          const zipMatch = content.match(/zip:"([^"]+)"/);
-
-          if (streetMatch && streetMatch[1]) {
-            acc.street = true;
-          }
-          if (numberMatch && numberMatch[1]) {
-            acc.number = true;
-          }
-          if (zipMatch && zipMatch[1]) {
-            acc.zip = true;
-          }
-        }
-        return acc;
-      },
-      { street: false, number: false, zip: false },
-    );
-
-    const analyzedInput = await this.analyzeUserInput(
+    const analyzedInput = await this.analyzeChatConversation(
       JSON.stringify(data.messages.slice(1)),
       openAiClient,
     );
+
     const addressObject = this.getAddress(analyzedInput);
     const pakkeshopData = await this.fetchPakkeshopInformation(addressObject);
 
     const trackingNumber = this.getTrackingNumber(analyzedInput);
     const apiData = await this.fetchTrackingInformation(trackingNumber);
 
-    console.log(' ================= pakkeshopData:', pakkeshopData);
-    console.log(' ================= addressObject:', addressObject);
-    console.log(' ================= addressInHistory:', addressInHistory);
-    console.log(' ================= data.messages:', data.messages.slice(1));
-
-    if (pakkeshopData) {
-      data.messages.push({
-        content: JSON.stringify({
-          pakkeshops: pakkeshopData.resultat.pakkeshops,
-        }),
-        role: 'system',
-      });
+    if (pakkeshopData && pakkeshopData.status === 'OK') {
+      if (pakkeshopData.status === 'OK') {
+        data.messages.push({
+          content: JSON.stringify({
+            pakkeshops: pakkeshopData.resultat.pakkeshops,
+          }),
+          role: 'system',
+        });
+      } else {
+        data.messages.push({
+          content: pakkeshopData.fejltekst,
+          role: 'system',
+        });
+      }
     } else {
       data.messages.push({
         content: JSON.stringify(addressObject),
