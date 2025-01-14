@@ -89,8 +89,10 @@ Prerequisites
 Running Webwhiz with docker
 
 1. Clone the repo
-2. Create `.env.docker.local` in the root and copy the .env.docker into it and add your `OPENAI_KEY` & `OPENAI_KEY_2` (take those from OpenAI in 1Password)
-3. Use docker compose up to start the stack
+2. Create `.env.docker.local` in the root and copy the .env.docker into it. Take the following env variables from 1Password:
+  - Add your `OPENAI_KEY` & `OPENAI_KEY_2` 
+  - Add `DAO_API_URL_CUSTOMER_ID` and `DAO_API_URL_CODE`
+3. Use docker compose up to start the project
 4. The chatbot opens at http://localhost:3030
 
 ```bash

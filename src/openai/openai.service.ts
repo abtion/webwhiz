@@ -159,12 +159,17 @@ export class OpenaiService {
    * @param input The user's question as a string.
    * @returns The category as a string.
    */
-  async analyzeUserInput(input: any, openAiClient: OpenAI): Promise<string> {
+  async analyzeChatConversation(
+    input: any,
+    openAiClient: OpenAI,
+  ): Promise<string> {
     const prompt = `
-      The user has entered the following input:
-      "${input}"
-
-      Determine whether the input relates to package tracking or tracking numbers (e.g., questions about shipments, delivery, or tracking numbers). Respond with "Provide tracking number" if it is related to tracking, but does not have a number consisting of 6 or more digits, if the user have provided a number respond with the provided number.
+      The chat history is: "${input}".
+      Determine whether any content in the chat history relates to package tracking or tracking numbers (e.g., questions about shipments, delivery, or tracking numbers) or address (e.g., questions about pickup address relative to user address).
+      Respond with "Provide tracking number" if it is related to tracking, but does not have a number consisting of 6 or more digits, if the user have provided a number respond with the provided number.
+      If any content in the chat history is related to an address, respond with the address in this format: {street:"[STREETNAME]", streetNumber:"[STREETNUMBER]" ,zip:"[ZIPCODE]"} (e.g., street:"Grækenlandsvej", streetNumber: "100",zip:"2300").
+      If only the street name is provided, and the zip code was previously mentioned respond with street and zip in before mentioned address format.
+      If only the zip code is provided, and the street name was previously mentioned respond with street and zip in before mentioned address format.
       `;
 
     try {
@@ -183,6 +188,50 @@ export class OpenaiService {
     }
   }
 
+  getAddress(analyzedInput: string): {
+    id: string;
+    street: string;
+    streetNumber: string;
+    zip: string;
+  } {
+    const regex =
+      /street:\s*"(.*?)"\s*,\s*streetNumber:\s*"(.*?)"\s*,\s*zip:\s*"(.*?)"/;
+    const matches = regex.exec(analyzedInput);
+
+    if (!matches) {
+      return { id: 'pakkeshopData', street: '', streetNumber: '', zip: '' };
+    }
+
+    const [, street, streetNumber, zip] = matches;
+
+    return { id: 'pakkeshopData', street, streetNumber, zip };
+  }
+
+  async fetchPakkeshopInformation(obj): Promise<any> {
+    if (obj.street === '' || obj.streetNumber === '' || obj.zip === '')
+      return null;
+
+    const apiUrl = `https://api.dao.as/DAOPakkeshop/FindPakkeshop.php?kundeid=${process.env.DAO_API_URL_CUSTOMER_ID}&kode=${process.env.DAO_API_URL_CODE}&postnr=${obj.zip}&adresse=${obj.street}%${obj.streetNumber}}&format=json&antal=5`;
+
+    try {
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`API request failed with status ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching tracking information:', error);
+      throw error;
+    }
+  }
+
   getTrackingNumber(analyzedInput: string): undefined | string {
     const regex = /\b(?:\d{9}|7\d{12}|00057\d{15})\b/g;
     const matches = analyzedInput.match(regex);
@@ -194,9 +243,7 @@ export class OpenaiService {
   async fetchTrackingInformation(trackingNumber: string): Promise<any> {
     if (!trackingNumber) return null;
 
-    const apiUrl =
-      'https://api.dao.as/TrackNTrace_v2.php?kundeid=5199&kode=iae3yckdoqua&stregkode=' +
-      trackingNumber;
+    const apiUrl = `https://api.dao.as/TrackNTrace_v2.php?kundeid=${process.env.DAO_API_URL_CUSTOMER_ID}&kode=${process.env.DAO_API_URL_CODE}&stregkode=${trackingNumber}`;
 
     try {
       const response = await fetch(apiUrl, {
@@ -230,15 +277,37 @@ export class OpenaiService {
     credentials = credentials || this.defaultCredentials;
     const openAiClient = getOpenAiClient(credentials);
 
-    const lastUserMessage = data.messages[data.messages.length - 1]?.content;
-
-    const analyzedInput = await this.analyzeUserInput(
-      lastUserMessage,
+    const analyzedInput = await this.analyzeChatConversation(
+      JSON.stringify(data.messages.slice(1)),
       openAiClient,
     );
-    const trackingNumber = this.getTrackingNumber(analyzedInput);
 
+    const addressObject = this.getAddress(analyzedInput);
+    const pakkeshopData = await this.fetchPakkeshopInformation(addressObject);
+
+    const trackingNumber = this.getTrackingNumber(analyzedInput);
     const apiData = await this.fetchTrackingInformation(trackingNumber);
+
+    if (pakkeshopData && pakkeshopData.status === 'OK') {
+      if (pakkeshopData.status === 'OK') {
+        data.messages.push({
+          content: JSON.stringify({
+            pakkeshops: pakkeshopData.resultat.pakkeshops,
+          }),
+          role: 'system',
+        });
+      } else {
+        data.messages.push({
+          content: pakkeshopData.fejltekst,
+          role: 'system',
+        });
+      }
+    } else {
+      data.messages.push({
+        content: JSON.stringify(addressObject),
+        role: 'system',
+      });
+    }
 
     if (apiData) {
       const {
