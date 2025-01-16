@@ -264,24 +264,12 @@ export class OpenaiService {
     }
   }
 
-  /**
-   * Get completions from ChatGTP
-   * @param data
-   * @returns
-   */
-  async getChatGptCompletion(
-    data: OpenAI.Chat.ChatCompletionCreateParamsNonStreaming,
-    credentials?: AICredentials,
-  ): Promise<ChatGTPResponse> {
-    // Get openAi client from the given keys
-    credentials = credentials || this.defaultCredentials;
-    const openAiClient = getOpenAiClient(credentials);
-
-    const analyzedInput = await this.analyzeChatConversation(
-      JSON.stringify(data.messages.slice(1)),
-      openAiClient,
-    );
-
+  async implementApiCalls(
+    analyzedInput: string,
+    data:
+      | OpenAI.Chat.ChatCompletionCreateParamsNonStreaming
+      | OpenAI.Chat.ChatCompletionCreateParamsStreaming,
+  ) {
     const addressObject = this.getAddress(analyzedInput);
     const pakkeshopData = await this.fetchPakkeshopInformation(addressObject);
 
@@ -319,6 +307,29 @@ export class OpenaiService {
         role: 'system',
       });
     }
+
+    return data;
+  }
+
+  /**
+   * Get completions from ChatGTP
+   * @param data
+   * @returns
+   */
+  async getChatGptCompletion(
+    data: OpenAI.Chat.ChatCompletionCreateParamsNonStreaming,
+    credentials?: AICredentials,
+  ): Promise<ChatGTPResponse> {
+    // Get openAi client from the given keys
+    credentials = credentials || this.defaultCredentials;
+    const openAiClient = getOpenAiClient(credentials);
+
+    const analyzedInput = await this.analyzeChatConversation(
+      JSON.stringify(data.messages.slice(1)),
+      openAiClient,
+    );
+
+    await this.implementApiCalls(analyzedInput, data);
 
     // Rate limiter check
     try {
@@ -368,6 +379,13 @@ export class OpenaiService {
     // Get openAi client from the given keys
     credentials = credentials || this.defaultCredentials;
     const openAiClient = getOpenAiClient(credentials);
+
+    const analyzedInput = await this.analyzeChatConversation(
+      JSON.stringify(data.messages.slice(1)),
+      openAiClient,
+    );
+
+    await this.implementApiCalls(analyzedInput, data);
 
     // Rate limiter check
     try {

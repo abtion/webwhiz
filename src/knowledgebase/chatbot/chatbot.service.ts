@@ -368,7 +368,7 @@ export class ChatbotService {
     //
 
     // Get answer from chatgpt
-    const prevMessages = sessionData.messages.slice(-2);
+    const prevMessages = sessionData.messages.slice(-3);
 
     const answer = await this.openaiChatbotService.getAiAnswer(
       sessionData.kbName,
@@ -514,7 +514,7 @@ export class ChatbotService {
     // Fetch previous messages from bot
     const prevMessages = this.getPreviousNMessagesFromBot(
       sessionData.messages,
-      2,
+      3,
     );
 
     //
