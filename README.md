@@ -94,6 +94,7 @@ Running Webwhiz with docker
   - Add `DAO_API_URL_CUSTOMER_ID` and `DAO_API_URL_CODE`
 3. Use docker compose up to start the project
 4. The chatbot opens at http://localhost:3030
+5. The wideget is available here: http://localhost:3031/?kbId=677d2480014a92ad6afde9df&embed=true&hide-chat-actions=true&baseUrl=http://127.0.0.1:3000
 
 ```bash
 # Bring up webwhiz
