@@ -22,7 +22,7 @@ idna==3.4
 inscriptis==2.3.2
 joblib==1.2.0
 kiwisolver==1.4.4
-kombu==5.2.4
+kombu==5.4.0
 lxml==4.9.2
 matplotlib==3.7.1
 multidict==6.0.4
@@ -52,6 +52,6 @@ tenacity==8.2.2
 threadpoolctl==3.1.0
 tqdm==4.65.0
 urllib3==1.26.14
-vine==5.0.0
+vine==5.1.0
 wcwidth==0.2.6
 yarl==1.8.2
