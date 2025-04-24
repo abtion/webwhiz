@@ -39,9 +39,7 @@ type OpenAICredentials = {
 type OpenAIAzureCredentials = {
   type: 'openai-azure';
   endpoint: string;
-  version: string;
   key: string;
-  deployment: string;
 };
 
 export type AICredentials = OpenAICredentials | OpenAIAzureCredentials;
@@ -61,8 +59,6 @@ function getOpenAiClient(credentials: AICredentials): OpenAI {
       return new AzureOpenAI({
         endpoint: credentials.endpoint,
         apiKey: credentials.key,
-        apiVersion: credentials.version,
-        deployment: credentials.deployment,
       });
     }
   }
@@ -91,8 +87,6 @@ export class OpenaiService {
           type: 'openai-azure',
           endpoint: this.appConfig.get('openaiAzureEndpoint'),
           key: this.appConfig.get('openaiAzureKey'),
-          version: this.appConfig.get('openaiAzureVersion'),
-          deployment: this.appConfig.get('defaultChatModel'),
         };
         break;
     }
