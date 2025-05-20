@@ -160,9 +160,10 @@ export class OpenaiService {
    * @returns The category as a string.
    */
   async analyzeChatConversation(
-    input: any,
+    data: OpenAI.Chat.ChatCompletionCreateParams,
     openAiClient: OpenAI,
   ): Promise<string> {
+    const input = JSON.stringify(data.messages.slice(1))
     const prompt = `
       The chat history is: "${input}".
       Determine whether any content in the chat history relates to package tracking or tracking numbers (e.g., questions about shipments, delivery, or tracking numbers) or address (e.g., questions about pickup address relative to user address).
@@ -174,7 +175,7 @@ export class OpenaiService {
 
     try {
       const response = await openAiClient.chat.completions.create({
-        model: 'gpt-4', // Or use another model
+        model: data.model, // Or use another model
         messages: [{ role: 'system', content: prompt }],
         temperature: 0, // To make the response more deterministic
       });
@@ -325,7 +326,7 @@ export class OpenaiService {
     const openAiClient = getOpenAiClient(credentials);
 
     const analyzedInput = await this.analyzeChatConversation(
-      JSON.stringify(data.messages.slice(1)),
+      data,
       openAiClient,
     );
 
@@ -381,7 +382,7 @@ export class OpenaiService {
     const openAiClient = getOpenAiClient(credentials);
 
     const analyzedInput = await this.analyzeChatConversation(
-      JSON.stringify(data.messages.slice(1)),
+      data,
       openAiClient,
     );
 
