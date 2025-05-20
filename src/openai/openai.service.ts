@@ -267,9 +267,7 @@ export class OpenaiService {
 
   async implementApiCalls(
     analyzedInput: string,
-    data:
-      | OpenAI.Chat.ChatCompletionCreateParamsNonStreaming
-      | OpenAI.Chat.ChatCompletionCreateParamsStreaming,
+    data: OpenAI.Chat.ChatCompletionCreateParams
   ) {
     const addressObject = this.getAddress(analyzedInput);
     const pakkeshopData = await this.fetchPakkeshopInformation(addressObject);
