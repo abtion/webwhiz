@@ -409,6 +409,8 @@ export class OpenaiService {
 
       const streamPromise = new Promise(async (res) => {
         for await (const part of completionStream) {
+          if (part.choices.length === 0) continue;
+
           const { content } = part.choices[0].delta;
 
           if (content !== undefined) {
