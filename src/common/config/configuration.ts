@@ -40,9 +40,9 @@ const config = (): AppConfig => ({
   encryptionKey:
     process.env.ENC_KEY ||
     '4b23f673b133b01777259525a4a1c2097fe309048db6593462312d5c35679ced',
-  mongoUri: process.env.MONGO_URI || 'mongodb://localhost:27017',
+  mongoUri: process.env.MONGO_URI || 'mongodb://127.0.0.1:27017',
   mongoDbName: process.env.MONGO_DBNAME || 'sitemine',
-  redisHost: process.env.REDIS_HOST || 'localhost',
+  redisHost: process.env.REDIS_HOST || '127.0.0.1',
   redisPort: parseInt(process.env.REDIS_PORT as string, 10) || 6379,
   redisUrl: process.env.REDIS_URL,
   defaultEmbeddingsModel: process.env.DEFAULT_EMBEDDINGS_MODEL || EmbeddingModel.OPENAI_EMBEDDING_3,
