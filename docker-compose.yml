@@ -44,19 +44,22 @@ services:
       - mongodb
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
     ports:
-      - "3030:80"
+      - "3030:3001"
     depends_on:
       - web
 
   widget:
     build:
       context: ./widget
+      dockerfile: Dockerfile.dev
       args:
          - PIRSCH_KEY
     ports:
-      - "3031:80"
+      - "3031:1234"
     depends_on:
       - web
 
