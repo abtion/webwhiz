@@ -167,7 +167,6 @@
 
             <!-- Conversation Feedback UI - Always visible at bottom -->
             <div id="conversation-feedback-persistent" class="conversation-feedback-persistent" style="display: none;">
-                <div class="feedback-question">How was your experience?</div>
                 <div class="feedback-buttons">
                     <button class="feedback-btn conversation-thumbs-up" data-feedback="GOOD" title="Good experience">
                         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -180,7 +179,6 @@
                         </svg>
                     </button>
                 </div>
-                <div class="feedback-thank-you" style="display: none;">Tak for din feedback!</div>
             </div>
 
             <form id="chat-form" class="chat-input-wrap">
@@ -395,14 +393,7 @@
             
             // Submit conversation feedback
             submitConversationFeedback(feedback).then(success => {
-                if (success) {
-                    // Show thank you message briefly
-                    const thankYou = document.querySelector('.conversation-feedback-persistent .feedback-thank-you');
-                    if (thankYou) {
-                        thankYou.style.display = 'block';
-                        
-                    }
-                } else {
+                if (!success) {
                     // Remove selection on error
                     btn.classList.remove('selected');
                 }
