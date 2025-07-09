@@ -337,10 +337,7 @@
         // Conversation-level feedback functions
         async function submitConversationFeedback(feedback) {
             try {
-                console.log('Submitting conversation feedback:', { feedback, sessionId });
-                
-                // For now, we'll send it to the same endpoint but with msgIdx: -1 to indicate it's conversation-level
-                // You may want to create a separate endpoint for this
+                // For now, we'll send it to the same endpoint but with msgIdx: -1 to indicate it's conversation-level, but we should consider a dedicated endpoint in the future
                 const response = await fetch(`${baseURL}/chatbot/session/${sessionId}/feedback`, {
                     method: 'PUT',
                     headers: {
@@ -353,11 +350,8 @@
                     })
                 });
                 
-                console.log('Conversation feedback response status:', response.status);
-                
                 if (response.ok) {
                     const responseText = await response.text();
-                    console.log('Conversation feedback submitted successfully:', responseText);
                     return true;
                 } else {
                     const errorText = await response.text();
