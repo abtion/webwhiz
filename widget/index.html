@@ -337,23 +337,23 @@
         const chatMaximizeBtn = document.querySelector('#chat-maximize-btn');
         const chatMinimizeBtn = document.querySelector('#chat-minimize-btn');
         const chatClearHistoryBtn = document.querySelector('#chat-clear-session-btn');
-        chatLauncherBtn.addEventListener('click', () => {
+        chatLauncherBtn?.addEventListener('click', () => {
             expandWidget();
         });
-        chatCloseBtn.addEventListener('click', () => {
+        chatCloseBtn?.addEventListener('click', () => {
             chatWidget.classList.remove('widget-open');
             chatWidget.classList.remove('widget-maximize');
             notifyParentWidgetCollapse();
         });
-        chatMaximizeBtn.addEventListener('click', () => {
+        chatMaximizeBtn?.addEventListener('click', () => {
             chatWidget.classList.toggle('widget-maximize');
             notifyParentWidgetMaximize();
         });
-        chatMinimizeBtn.addEventListener('click', () => {
+        chatMinimizeBtn?.addEventListener('click', () => {
             chatWidget.classList.toggle('widget-maximize');
             notifyParentWidgetMinimize();
         });
-        chatClearHistoryBtn.addEventListener('click', resetChatHistory);
+        chatClearHistoryBtn?.addEventListener('click', resetChatHistory);
 
         function expandWidget() {
             chatWidget.classList.add('widget-open');
