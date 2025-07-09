@@ -15,8 +15,7 @@ RUN npm install
 
 # Copying all the files in our project
 COPY . .
-
-ARG PIRSCH_KEY
+COPY .env.docker .env
 
 # Building our application
 RUN npm run build

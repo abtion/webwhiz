@@ -225,7 +225,7 @@
         const urlParams = new URLSearchParams(window.location.search);
 
         let knowledgebaseId;
-        const baseURL = urlParams.get('baseUrl') || 'https://api.webwhiz.ai';
+        const baseURL = urlParams.get('baseUrl') || process.env.WW_BASE_URL || 'https://api.webwhiz.ai';
         const chatWidget = document.querySelector('.chat-wrap');
 
         if (urlParams.get('embed') === 'true') {
@@ -406,6 +406,9 @@
 
 
         async function getWidgetMessages() {
+            if (!sessionId) {
+                return;
+            }
             const url = `${baseURL}/chatbot/session/${sessionId}/messages`;
             try {
                 const response = await fetch(url, {
@@ -416,7 +419,6 @@
                     },
                     referrerPolicy: 'no-referrer',
                 });
-
                 if (response.status === 200) {
                     const { messages: _messages } = await response.json();
 
@@ -445,12 +447,10 @@
                     const chatMessages = document.getElementById('chat-messages');
                     chatMessages.insertAdjacentHTML("beforeend", msgHTML);
                     chatMessages.scrollTop = chatMessages.scrollHeight;
+                } else if (response.status === 404) {
+                    resetChatHistory()
                 } else {
                     console.error('Failed to fetch messages: Status', response.status);
-                }
-
-                if (response.status === 404) {
-                    resetChatHistory()
                 }
             } catch (error) {
                 console.error('Error fetching messages:', error);
@@ -1368,16 +1368,6 @@
             });
         }
 
-    </script>
-    <script type="module">
-        const pirsch_key = process.env.PIRSCH_KEY
-        if (pirsch_key) {
-            let script = document.createElement("script");
-            script.setAttribute("src", "https://api.pirsch.io/pirsch.js");
-            script.setAttribute("id", "pirschjs");
-            script.setAttribute("defer", "");
-            script.setAttribute("data-code", pirsch_key);
-        }
     </script>
 </body>
 
