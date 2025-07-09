@@ -165,6 +165,22 @@
                 </div>
             </div>
 
+            <!-- Conversation Feedback UI - Always visible at bottom -->
+            <div id="conversation-feedback-persistent" class="conversation-feedback-persistent" style="display: none;">
+                <div class="feedback-buttons">
+                    <button class="feedback-btn conversation-thumbs-up" data-feedback="GOOD" title="Good experience">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                    <button class="feedback-btn conversation-thumbs-down" data-feedback="BAD" title="Bad experience">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
             <form id="chat-form" class="chat-input-wrap">
                 <textarea rows='1' class="chat-input textarea js-auto-size" id="chat-input"
                     placeholder="Type your message"></textarea>
@@ -214,6 +230,7 @@
 
 
         let sessionId = '';
+        let messageIndex = 0; // Counter for tracking message indices for feedback
 
         function getDomainFromUrl(url) {
             if (!url) return '';
@@ -315,6 +332,73 @@
             return str.replace(new RegExp(escapeRegExp(find), 'g'), replace);
         }
 
+        // Conversation-level feedback functions
+        async function submitConversationFeedback(feedback) {
+            try {
+                // For now, we'll send it to the same endpoint but with msgIdx: -1 to indicate it's conversation-level, but we should consider a dedicated endpoint in the future
+                const response = await fetch(`${baseURL}/chatbot/session/${sessionId}/feedback`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        msgIdx: -1, // Special value to indicate conversation-level feedback
+                        feedback: feedback,
+                        conversationFeedback: true // Additional flag
+                    })
+                });
+                
+                if (response.ok) {
+                    const responseText = await response.text();
+                    return true;
+                } else {
+                    const errorText = await response.text();
+                    console.error('Failed to submit conversation feedback:', response.status, errorText);
+                    return false;
+                }
+            } catch (error) {
+                console.error('Error submitting conversation feedback:', error);
+                return false;
+            }
+        }
+
+        // Persistent feedback functions
+        function showPersistentFeedback() {
+            const feedbackDiv = document.getElementById('conversation-feedback-persistent');
+            if (feedbackDiv && messageIndex > 1) { // Only show if there's been actual conversation
+                feedbackDiv.style.display = 'flex';
+                
+                // Add event listeners to feedback buttons if not already added
+                const feedbackButtons = feedbackDiv.querySelectorAll('.feedback-btn');
+                feedbackButtons.forEach(btn => {
+                    // Remove existing listeners to avoid duplicates
+                    btn.removeEventListener('click', handlePersistentFeedbackClick);
+                    btn.addEventListener('click', handlePersistentFeedbackClick);
+                });
+            }
+        }
+
+        function handlePersistentFeedbackClick(event) {
+            const btn = event.currentTarget;
+            const feedback = btn.getAttribute('data-feedback');
+            
+            // Remove selection from all buttons and mark clicked button as selected
+            const allButtons = document.querySelectorAll('.conversation-feedback-persistent .feedback-btn');
+            allButtons.forEach(button => {
+                button.classList.remove('selected');
+            });
+            
+            // Mark the clicked button as selected
+            btn.classList.add('selected');
+            
+            // Submit conversation feedback
+            submitConversationFeedback(feedback).then(success => {
+                if (!success) {
+                    // Remove selection on error
+                    btn.classList.remove('selected');
+                }
+            });
+        }
 
         function resetChatHistory() {
             const chatMessages = document.getElementById('chat-messages');
@@ -940,6 +1024,7 @@
             const chatMessages = document.getElementById('chat-messages');
             chatMessages.insertAdjacentHTML("beforeend",
                 `<div class="chat-message user"><div class="chat-message-text">${message}</div></div>`)
+            messageIndex++; // Increment message counter for user messages too
 
             const lastMesage = chatMessages.lastChild.querySelector('.chat-message-text');
             chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -1017,6 +1102,11 @@
                         msg = replaceAll(msg, '<br/>', '\n')
                         const markdownRes = marked.parse(msg);
                         msgHolder.innerHTML = markdownRes;
+                        messageIndex++; // Increment message counter
+                        
+                        // Show persistent feedback UI after first bot response
+                        showPersistentFeedback();
+                        
                         if (collectEmail && isFirstMessage) {
                             const collectEmailMarkup = `<div class="chat-message chatbot">
                                     <div
@@ -1087,6 +1177,10 @@
                 )
                 chatMessages.insertAdjacentHTML("beforeend",
                     `<div class="chat-message chatbot"><div class="chat-message-text">${markdownRes}</div></div>`)
+                messageIndex++; // Increment message counter
+                
+                // Show persistent feedback UI after bot response
+                showPersistentFeedback();
             }
         }
 

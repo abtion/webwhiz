@@ -987,22 +987,31 @@ export class ChatbotService {
   }
 
   /**
-   * Set Feedback for Chat Session Msg by Msg Idx
+   * Set Feedback for Chat Session Msg by Msg Idx or Conversation Level
    * @param sessionId
    * @param msgIdx
    * @param feedback
+   * @param isConversationFeedback
    */
   async setSessionMessageFeedback(
     sessionId: string,
     msgIdx: number,
     feedback: ChatAnswerFeedbackType,
+    isConversationFeedback = false,
   ) {
     try {
-      await this.kbDbService.setChatSessionMessageFeedback(
-        new ObjectId(sessionId),
-        msgIdx,
-        feedback,
-      );
+      if (isConversationFeedback) {
+        await this.kbDbService.setChatSessionConversationFeedback(
+          new ObjectId(sessionId),
+          feedback,
+        );
+      } else {
+        await this.kbDbService.setChatSessionMessageFeedback(
+          new ObjectId(sessionId),
+          msgIdx,
+          feedback,
+        );
+      }
     } catch {
       throw new HttpException('Invalid Session', HttpStatus.NOT_FOUND);
     }
