@@ -386,21 +386,13 @@
             }
         }
 
-        function hidePersistentFeedback() {
-            const feedbackDiv = document.getElementById('conversation-feedback-persistent');
-            if (feedbackDiv) {
-                feedbackDiv.style.display = 'none';
-            }
-        }
-
         function handlePersistentFeedbackClick(event) {
             const btn = event.currentTarget;
             const feedback = btn.getAttribute('data-feedback');
             
-            // Disable all feedback buttons
+            // Remove selection from all buttons and mark clicked button as selected
             const allButtons = document.querySelectorAll('.conversation-feedback-persistent .feedback-btn');
             allButtons.forEach(button => {
-                button.disabled = true;
                 button.classList.remove('selected');
             });
             
@@ -410,21 +402,14 @@
             // Submit conversation feedback
             submitConversationFeedback(feedback).then(success => {
                 if (success) {
-                    // Show thank you message
+                    // Show thank you message briefly
                     const thankYou = document.querySelector('.conversation-feedback-persistent .feedback-thank-you');
                     if (thankYou) {
                         thankYou.style.display = 'block';
                         
-                        // Hide the feedback UI after a short delay
-                        setTimeout(() => {
-                            hidePersistentFeedback();
-                        }, 2000);
                     }
                 } else {
-                    // Re-enable buttons on error
-                    allButtons.forEach(button => {
-                        button.disabled = false;
-                    });
+                    // Remove selection on error
                     btn.classList.remove('selected');
                 }
             });
