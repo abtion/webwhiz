@@ -1,17 +1,15 @@
-version: '3'
-
 services:
   redis:
     image: redis:alpine
-    expose:
-      - "6379"
+    ports:
+      - "127.0.0.1:6379:6379"
 
   mongodb:
     image: mongo:latest
     volumes:
       - db-data:/data/db
-    expose:
-      - "27017"
+    ports:
+      - "127.0.0.1:27017:27017"
 
   web:
     build:
