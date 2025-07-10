@@ -1107,19 +1107,13 @@ a.chat-source-btn {
     transform: translateY(-1px);
 }
 
-.conversation-feedback-persistent .feedback-btn svg {
-    width: 20px;
-    height: 20px;
-    stroke: currentColor;
-    fill: none;
-}
-
-.conversation-feedback-persistent .feedback-btn.conversation-thumbs-up {
-    color: #10b981;
-}
-
-.conversation-feedback-persistent .feedback-btn.conversation-thumbs-down {
-    color: #ef4444;
+.conversation-feedback-persistent .feedback-btn span {
+    font-size: 24px;
+    line-height: 1;
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    text-align: center;
 }
 
 .conversation-feedback-persistent .feedback-btn.selected {
