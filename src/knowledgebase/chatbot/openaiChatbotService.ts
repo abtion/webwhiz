@@ -400,7 +400,7 @@ export class OpenaiChatbotService {
 
     const answerStream = await this.openaiService.getChatGptCompletionStream(
       {
-        messages: messages as any,
+        messages: messages,
         temperature: 0,
         frequency_penalty: 0,
         presence_penalty: 0,
