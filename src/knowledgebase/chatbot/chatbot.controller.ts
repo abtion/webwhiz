@@ -125,6 +125,7 @@ export class ChatbotController {
       id,
       data.msgIdx,
       data.feedback,
+      data.conversationFeedback || false,
     );
   }
 

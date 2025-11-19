@@ -661,6 +661,22 @@ export class KnowledgebaseDbService {
     );
   }
 
+  async setChatSessionConversationFeedback(
+    id: ObjectId,
+    feedback: ChatAnswerFeedbackType,
+  ) {
+    await this.chatSessionCollection.updateOne(
+      {
+        _id: id,
+      },
+      {
+        $set: {
+          conversationFeedback: feedback,
+        },
+      },
+    );
+  }
+
   /** *******************************************
    * PROMPT RELATED
    ******************************************** */
