@@ -1,5 +1,5 @@
 # Fetching the latest node image on apline linux
-FROM node:14-alpine
+FROM node:18-alpine
 
 # Declaring env
 ARG BASE_TARGET _parent
