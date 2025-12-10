@@ -1,4 +1,4 @@
-import fitz
+import pymupdf
 from pymongo.database import Database
 from typing import Optional, TypedDict
 from bson.objectid import ObjectId
@@ -35,7 +35,7 @@ def get_text_from_pdf(
 ) -> str:
     pdf_text = ""
 
-    with fitz.open(pdf_file_path) as doc:
+    with pymupdf.open(pdf_file_path) as doc:
         page_count = 0
         for page in doc:
             page_count += 1
