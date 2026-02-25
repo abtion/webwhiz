@@ -1055,7 +1055,7 @@ a.chat-source-btn {
 }
 
 .offline-message.show-success-msg,
-.offline-message.how-error-msg {
+.offline-message.show-error-msg {
     overflow: hidden;
 }
 .switch-chat-btn {
