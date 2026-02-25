@@ -66,7 +66,7 @@ export class ChatbotService {
     @Inject(REDIS) private redis: Redis,
     @Inject(forwardRef(() => WebSocketChatGateway))
     private webSocketChatGateway: WebSocketChatGateway,
-  ) { }
+  ) {}
 
   private async putChatSessionDataToCache(sessionData: ChatSession) {
     return this.redis.set(
@@ -154,12 +154,8 @@ export class ChatbotService {
    */
   calculateMsgCountBasedOnModel(messageCount: number, model: string) {
     switch (model) {
-      case 'gpt-4-0613': // GPT-4
-        return messageCount * 20;
-      case 'gpt-4-turbo-preview': // GPT-4-Turbo
-        return messageCount * 10;
-      case 'gpt-3.5-turbo': // GPT-3.5-Turbo
-      case 'gpt-4o': // GPT-4o
+      case 'gpt-4o':
+      case 'gpt-5.1-chat':
       default:
         return messageCount;
     }
@@ -305,7 +301,6 @@ export class ChatbotService {
     if (!sessionData) {
       throw new HttpException('Invalid Session Id', HttpStatus.NOT_FOUND);
     }
-
     // The maxMessages field is introduced newly and will not be available for old sessions. So,
     // if the maxMessages field is not available, then we will fetch the subscription plan for the user
     // and get the maxMessages from there. Then save it to the sessionData for future use.
@@ -369,7 +364,7 @@ export class ChatbotService {
     //
 
     // Get answer from chatgpt
-    const prevMessages = sessionData.messages.slice(-2);
+    const prevMessages = sessionData.messages.slice(-3);
 
     const answer = await this.openaiChatbotService.getAiAnswer(
       sessionData.kbName,
@@ -396,6 +391,7 @@ export class ChatbotService {
       sender: null,
       sessionId: sessionId,
     };
+
     await this.updateSessionDataWithNewMsg(sessionData, msg);
 
     const sources = topChunks
@@ -514,7 +510,7 @@ export class ChatbotService {
     // Fetch previous messages from bot
     const prevMessages = this.getPreviousNMessagesFromBot(
       sessionData.messages,
-      2,
+      3,
     );
 
     //
@@ -785,11 +781,11 @@ export class ChatbotService {
       data.query,
       data.context.map(
         (c) =>
-        ({
-          content: c,
-          score: 0.9,
-          url: 'http://test',
-        } as any),
+          ({
+            content: c,
+            score: 0.9,
+            url: 'http://test',
+          } as any),
       ),
       data.prevMessages as any,
       data.defaultAnswer,
@@ -987,22 +983,31 @@ export class ChatbotService {
   }
 
   /**
-   * Set Feedback for Chat Session Msg by Msg Idx
+   * Set Feedback for Chat Session Msg by Msg Idx or Conversation Level
    * @param sessionId
    * @param msgIdx
    * @param feedback
+   * @param isConversationFeedback
    */
   async setSessionMessageFeedback(
     sessionId: string,
     msgIdx: number,
     feedback: ChatAnswerFeedbackType,
+    isConversationFeedback = false,
   ) {
     try {
-      await this.kbDbService.setChatSessionMessageFeedback(
-        new ObjectId(sessionId),
-        msgIdx,
-        feedback,
-      );
+      if (isConversationFeedback) {
+        await this.kbDbService.setChatSessionConversationFeedback(
+          new ObjectId(sessionId),
+          feedback,
+        );
+      } else {
+        await this.kbDbService.setChatSessionMessageFeedback(
+          new ObjectId(sessionId),
+          msgIdx,
+          feedback,
+        );
+      }
     } catch {
       throw new HttpException('Invalid Session', HttpStatus.NOT_FOUND);
     }
@@ -1021,12 +1026,8 @@ export class ChatbotService {
    */
   calculateTotalTokens(qTokens: number, aTokens: number, model: string) {
     switch (model) {
-      case 'gpt-4-0613': // GPT-4
-        return qTokens * 60 + aTokens * 40;
-      case 'gpt-4-turbo-preview': // GPT-4-Turbo
-        return qTokens * 20 + aTokens * 20;
-      case 'gpt-3.5-turbo': // GPT-3.5
-      case 'gpt-4o': // GPT-4o
+      case 'gpt-4o':
+      case 'gpt-5.1-chat':
       default:
         return qTokens + aTokens;
     }

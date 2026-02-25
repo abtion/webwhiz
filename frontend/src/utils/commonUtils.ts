@@ -58,15 +58,11 @@ export function getBrowserName(userAgent: string) {
 
 export function getLlmModelUsed(modelName?: string) {
   switch (modelName) {
-    case 'gpt-4-0613':
-      return 'GPT-4';
-    case 'gpt-4-turbo-preview':
-      return 'GPT-4 Turbo';
     case 'gpt-4o':
       return 'GPT-4o';
-    case 'gpt-3.5-turbo':
+    case 'gpt-5.1-chat':
     default:
-      return 'GPT-3.5 Turbo';
+      return 'GPT-5.1 Chat';
   }
 }
 

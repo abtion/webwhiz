@@ -1,5 +1,7 @@
 # WebWhiz
 
+This was forked from https://github.com/webwhiz-ai/webwhiz
+
 Train ChatGPT on Your Website Data and Build an AI Chatbot that can instantly answer your customers queries.
 
 ![webwhiz](https://user-images.githubusercontent.com/6586706/236858939-4f3e4ac0-f3f7-4f76-8fee-add747b09ce1.png)
@@ -89,25 +91,33 @@ Prerequisites
 Running Webwhiz with docker
 
 1. Clone the repo
-2. Edit the `.env.docker` file present in the root of the repo and add your `OPENAI_KEY` & `OPENAI_KEY_2`
-3. Use docker-compose to start the stack
+2. Create `.env.docker.local` in the root and copy the .env.docker into it. Take the following env variables from 1Password:
+  - Add your `OPENAI_KEY` & `OPENAI_KEY_2` 
+  - Add `DAO_API_URL_CUSTOMER_ID` and `DAO_API_URL_CODE`
+3. Use docker compose up to start the project
+4. The chatbot opens at http://localhost:3030
+5. The widget is available here: http://localhost:3031/?kbId=677d2480014a92ad6afde9df&embed=true&hide-chat-actions=true&baseUrl=http://127.0.0.1:3000
 
 ```bash
 # Bring up webwhiz
 # Once the building is done and webwhiz starts the UI will be available at
 # http://localhost:3030, backend is available at http://localhost:3000
 # To exit Press Ctrl-C
-docker-compose up
+docker compose up
 
 # Alternatively Run webwhiz as a daemon
-docker-compose up -d
+docker compose up -d
 
 # Stop Webwhiz
-docker-compose down
+docker compose down
 
 # Force rebuild all containers (required only if some change is not picked up)
-sudo docker-compose up --build --force-recreate
+sudo docker compose up --build --force-recreate
 ```
+
+3. Configure `widget/nginx-variables.conf`.
+
+`set $FRAME_ANCESTORS "https://your.domain"`, to allow iframing of the widget on `your.domain`.
 
 ### 🛃 Manual
 
@@ -152,6 +162,10 @@ The following variables as mandatory
 2. Inside the workers folder create a copy of the `.env.sample` and rename as `.env`.
 
 Set the value for the following variables - `MONGO_URI`, `MONGO_DBNAME`, `REDIS_HOST`, `REDIS_PORT`
+
+3. Configure `widget/nginx-variables.conf`.
+
+`set $FRAME_ANCESTORS "https://your.domain"`, to allow iframing of the widget on `your.domain`.
 
 #### Installing dependencies and running app
 

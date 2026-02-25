@@ -105,11 +105,11 @@ export const SettingsGeneral = () => {
               colorScheme="teal"
               size="md"
               isLoading={isLoading}
-			  isDisabled={isApiKeyLoading}
+			        isDisabled={isApiKeyLoading || true}
               loadingText={'Saving...'}
               onClick={handleApiKeySave}
             >
-              Save
+              Do not use for Azure OpenAI
             </Button>
           </HStack>
         </Flex>

@@ -7,6 +7,7 @@ import {
 } from '../../common/celery/celery-client.module';
 import { retryWithBackoff } from '../../common/utils';
 import {
+  AICredentials,
   ChatGTPResponse,
   ChatGptPromptMessages,
   OpenaiService,
@@ -50,10 +51,13 @@ export class OpenaiChatbotService {
     this.logger = new Logger(OpenaiChatbotService.name);
   }
 
-  private getCustomKeys(customKeys?: CustomKeyData): string[] | undefined {
+  private getCustomCredentials(
+    customKeys?: CustomKeyData,
+  ): AICredentials | undefined {
     if (!customKeys?.useOwnKey) return undefined;
 
-    return this.customKeyService.decryptCustomKeys(customKeys?.keys);
+    const keys = this.customKeyService.decryptCustomKeys(customKeys?.keys);
+    return { type: 'openai', keys };
   }
 
   /** *******************************************
@@ -93,7 +97,7 @@ export class OpenaiChatbotService {
       async () => {
         const embeddings = await this.openaiService.getEmbedding(
           text,
-          this.getCustomKeys(customKeys),
+          this.getCustomCredentials(customKeys),
           embeddingModel,
         );
         return embeddings;
@@ -171,7 +175,7 @@ export class OpenaiChatbotService {
     // Get embeddings for given query
     const queryEmbedding = await this.openaiService.getEmbedding(
       query,
-      this.getCustomKeys(customKeys),
+      this.getCustomCredentials(customKeys),
       embeddingModel,
     );
 
@@ -365,7 +369,7 @@ export class OpenaiChatbotService {
         top_p: 1,
         model: model || 'gpt-3.5-turbo',
       },
-      this.getCustomKeys(customKeys),
+      this.getCustomCredentials(customKeys),
     );
 
     return { ...answer, messages: debug ? { messages } : {} };
@@ -396,7 +400,7 @@ export class OpenaiChatbotService {
 
     const answerStream = await this.openaiService.getChatGptCompletionStream(
       {
-        messages: messages as any,
+        messages: messages,
         temperature: 0,
         frequency_penalty: 0,
         presence_penalty: 0,
@@ -405,7 +409,7 @@ export class OpenaiChatbotService {
         model: model || 'gpt-3.5-turbo',
       },
       answerCompleteCb,
-      this.getCustomKeys(customKeys),
+      this.getCustomCredentials(customKeys),
     );
 
     return answerStream;

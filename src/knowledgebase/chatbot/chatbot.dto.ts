@@ -25,6 +25,9 @@ export class SetChatbotSessionMsgFeedbackDTO {
 
   @IsEnum(ChatAnswerFeedbackType)
   feedback: ChatAnswerFeedbackType;
+
+  @IsOptional()
+  conversationFeedback?: boolean;
 }
 
 export class ChatbotQueryDTO {

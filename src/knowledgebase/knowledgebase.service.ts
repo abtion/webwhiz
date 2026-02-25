@@ -33,6 +33,7 @@ import {
 import { CustomKeyService } from './custom-key.service';
 import { UserService } from '../user/user.service';
 import { EmailService } from '../common/email/email.service';
+import { AppConfigService } from '../common/config/appConfig.service';
 
 @Injectable()
 export class KnowledgebaseService {
@@ -43,6 +44,7 @@ export class KnowledgebaseService {
     private customKeyService: CustomKeyService,
     private readonly userService: UserService,
     private emailService: EmailService,
+    private appConfig: AppConfigService,
   ) {}
 
   /*********************************************************
@@ -174,8 +176,8 @@ export class KnowledgebaseService {
       websiteData,
       createdAt: ts,
       updatedAt: ts,
-      embeddingModel: EmbeddingModel.OPENAI_EMBEDDING_3,
-      model: 'gpt-3.5-turbo',
+      embeddingModel: this.appConfig.get('defaultEmbeddingsModel'),
+      model: this.appConfig.get('defaultChatModel'),
     };
     const kbData = await this.kbDbService.insertKnowledgebase(kb);
 

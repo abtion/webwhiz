@@ -207,6 +207,7 @@ export interface ChatSession {
   startedAt: Date;
   updatedAt: Date;
   embeddingModel?: EmbeddingModel;
+  conversationFeedback?: ChatAnswerFeedbackType;
 }
 export type ChatSessionSparse = Pick<
   ChatSession,
