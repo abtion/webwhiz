@@ -154,12 +154,8 @@ export class ChatbotService {
    */
   calculateMsgCountBasedOnModel(messageCount: number, model: string) {
     switch (model) {
-      case 'gpt-4-0613': // GPT-4
-        return messageCount * 20;
-      case 'gpt-4-turbo-preview': // GPT-4-Turbo
-        return messageCount * 10;
-      case 'gpt-3.5-turbo': // GPT-3.5-Turbo
-      case 'gpt-4o': // GPT-4o
+      case 'gpt-4o':
+      case 'gpt-5.1-chat':
       default:
         return messageCount;
     }
@@ -1030,12 +1026,8 @@ export class ChatbotService {
    */
   calculateTotalTokens(qTokens: number, aTokens: number, model: string) {
     switch (model) {
-      case 'gpt-4-0613': // GPT-4
-        return qTokens * 60 + aTokens * 40;
-      case 'gpt-4-turbo-preview': // GPT-4-Turbo
-        return qTokens * 20 + aTokens * 20;
-      case 'gpt-3.5-turbo': // GPT-3.5
-      case 'gpt-4o': // GPT-4o
+      case 'gpt-4o':
+      case 'gpt-5.1-chat':
       default:
         return qTokens + aTokens;
     }

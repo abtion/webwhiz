@@ -19,12 +19,12 @@ services:
       - .:/usr/src/app
       - /usr/src/app/node_modules # Prevent overwriting of `node_modules`
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     environment:
       NODE_ENV: development
-    env_file: 
+    env_file:
       - .env.docker
-      - .env.docker.local      
+      - .env.docker.local
     command: yarn run start:dev
     depends_on:
       - redis
@@ -33,12 +33,23 @@ services:
   nodejs_worker:
     build: .
     command: node dist/crawler.main.js
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules # Prevent overwriting of `node_modules`
+    env_file:
+      - .env.docker
+      - .env.docker.local
     depends_on:
       - redis
       - mongodb
 
   python_worker:
     build: ./workers
+    volumes:
+      - ./workers:/app
+    env_file:
+      - .env.docker
+      - .env.docker.local
     depends_on:
       - redis
       - mongodb
@@ -47,8 +58,11 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile.dev
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
     ports:
-      - "3030:3001"
+      - "127.0.0.1:3030:3030"
     depends_on:
       - web
 
@@ -59,7 +73,7 @@ services:
       args:
          - PIRSCH_KEY
     ports:
-      - "3031:1234"
+      - "127.0.0.1:3031:1234"
     depends_on:
       - web
 
