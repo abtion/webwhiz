@@ -177,7 +177,7 @@ export class OpenaiService {
       const response = await openAiClient.chat.completions.create({
         model: data.model, // Or use another model
         messages: [{ role: 'system', content: prompt }],
-        temperature: 0, // To make the response more deterministic
+        temperature: 1, // To make the response more deterministic
       });
 
       const result = response.choices[0]?.message?.content?.trim();

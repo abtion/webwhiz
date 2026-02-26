@@ -363,7 +363,7 @@ export class OpenaiChatbotService {
     const answer = await this.openaiService.getChatGptCompletion(
       {
         messages: messages as any,
-        temperature: 0.1,
+        temperature: 1,
         frequency_penalty: 0,
         presence_penalty: 0,
         top_p: 1,
@@ -401,7 +401,7 @@ export class OpenaiChatbotService {
     const answerStream = await this.openaiService.getChatGptCompletionStream(
       {
         messages: messages,
-        temperature: 0,
+        temperature: 1,
         frequency_penalty: 0,
         presence_penalty: 0,
         stream: true,
