@@ -163,7 +163,7 @@ export class OpenaiService {
     data: OpenAI.Chat.ChatCompletionCreateParams,
     openAiClient: OpenAI,
   ): Promise<string> {
-    const input = JSON.stringify(data.messages.slice(1))
+    const input = JSON.stringify(data.messages.slice(1));
     const prompt = `
       The chat history is: "${input}".
       Determine whether any content in the chat history relates to package tracking or tracking numbers (e.g., questions about shipments, delivery, or tracking numbers) or address (e.g., questions about pickup address relative to user address).
@@ -267,7 +267,7 @@ export class OpenaiService {
 
   async implementApiCalls(
     analyzedInput: string,
-    data: OpenAI.Chat.ChatCompletionCreateParams
+    data: OpenAI.Chat.ChatCompletionCreateParams,
   ) {
     const addressObject = this.getAddress(analyzedInput);
     const pakkeshopData = await this.fetchPakkeshopInformation(addressObject);
