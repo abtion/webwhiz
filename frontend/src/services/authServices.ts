@@ -14,7 +14,7 @@ export async function signUp(payload: {
 	});
 }
 export async function logIn(payload: {
-	email: string;
+	username: string;
 	password: string;
 }): Promise<AxiosResponse<SignUp>> {
 	return await axios({
