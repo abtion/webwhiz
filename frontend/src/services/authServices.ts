@@ -4,6 +4,7 @@ import { baseURL } from '../config';
 export async function signUp(payload: {
 	email: string;
 	password: string;
+	confirmPassword: string;
 }): Promise<AxiosResponse<SignUp>> {
 	return await axios({
 		baseURL: baseURL,
@@ -13,7 +14,7 @@ export async function signUp(payload: {
 	});
 }
 export async function logIn(payload: {
-	email: string;
+	username: string;
 	password: string;
 }): Promise<AxiosResponse<SignUp>> {
 	return await axios({
