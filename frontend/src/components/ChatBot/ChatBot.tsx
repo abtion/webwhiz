@@ -84,7 +84,6 @@ export const ChatBot = ({
 		setQuestion(e.target.value)
 	}, []);
 	
-
 	const handleSubmit = React.useCallback(async (e) => {
 
 		
