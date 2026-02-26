@@ -30,7 +30,7 @@ const getMessageClassName = (type: string) => {
 		return 'chat-message user'
 	}
 }
-const getMessageStyle = (type: string, customStyle) => {
+const getMessageStyle = (type: string, customStyle: { backgroundColor: any; fontColor: any; }) => {
 	if(type === 'bot') {
 		return {}
 	} else if(type === 'bot-error') {
@@ -48,7 +48,7 @@ export const ChatBot = ({
 	showCloseButton = true,
 	showLauncher = true,
 	height = '520px',
-}) => {
+}: ChatBotProps) => {
 
 	const user = CurrentUser.get();
 
