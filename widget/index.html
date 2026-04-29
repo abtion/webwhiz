@@ -390,6 +390,13 @@
             // Mark the clicked button as selected
             btn.classList.add('selected');
             
+            // Notify React Native WebView if running inside one
+            if (window.ReactNativeWebView) {
+                window.ReactNativeWebView.postMessage(
+                    JSON.stringify({ type: 'conversationFeedback', feedback })
+                );
+            }
+
             // Submit conversation feedback
             submitConversationFeedback(feedback).then(success => {
                 if (!success) {
