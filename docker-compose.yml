@@ -72,6 +72,9 @@ services:
       dockerfile: Dockerfile.dev
       args:
          - PIRSCH_KEY
+    volumes:
+      - ./widget:/app
+      - /app/node_modules
     ports:
       - "127.0.0.1:3031:1234"
     depends_on:
