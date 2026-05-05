@@ -30,6 +30,7 @@ interface AppConfig {
   senderEmail: string;
   senderName: string;
   clientUrl: string;
+  allowPublicSignup: boolean;
 }
 
 const config = (): AppConfig => ({
@@ -65,6 +66,7 @@ const config = (): AppConfig => ({
   senderEmail: process.env.EMAIL_SENDER_EMAIL || 'hi@webwhiz.ai',
   senderName: process.env.EMAIL_SENDER_NAME || 'WebWhiz.ai',
   clientUrl: process.env.CLIENT_URL || 'https://app.webwhiz.ai',
+  allowPublicSignup: process.env.ALLOW_PUBLIC_SIGNUP !== 'false',
 });
 
 export { AppConfig };
