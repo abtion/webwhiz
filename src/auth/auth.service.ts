@@ -1,4 +1,5 @@
 import {
+  ForbiddenException,
   HttpException,
   HttpStatus,
   Injectable,
@@ -152,6 +153,9 @@ export class AuthService {
     }
 
     // Create user
+    if (!this.appConfig.get('allowPublicSignup')) {
+      throw new ForbiddenException('Signups are disabled');
+    }
     const newUser = await this.userService.createGoogleOAuthUser(userProfile);
     // Check user is present in the invited list
     // Add to participants list of user is present
