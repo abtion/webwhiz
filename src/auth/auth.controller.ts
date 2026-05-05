@@ -1,17 +1,22 @@
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, ForbiddenException, Post, Req, UseGuards } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { CreateUserDTO } from '../user/user.dto';
 import { User } from '../user/user.schema';
 import { AdminLoginDTO, GoogleAuthDTO } from './auth.dto';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { Public } from './guards/public.guard';
+import { AppConfig } from '../common/config/configuration';
 import { Roles } from './guards/role.enum';
 import { JwtToken } from './types/jwt-types.dto';
 import { Role } from './types/role.enum';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private configService: ConfigService<AppConfig>,
+  ) {}
 
   /**
    * Checks the user credentials and logs in the user
@@ -28,6 +33,9 @@ export class AuthController {
   @Post('/signup')
   @Public()
   async signup(@Body() data: CreateUserDTO) {
+    if (!this.configService.get('allowPublicSignup')) {
+      throw new ForbiddenException('Signups are disabled');
+    }
     return this.authService.signup(data);
   }
 
