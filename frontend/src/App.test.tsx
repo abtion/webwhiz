@@ -3,8 +3,8 @@ import { screen } from '@testing-library/react';
 import { render } from './test-utils';
 import { Base } from './Base';
 
-test('renders learn react link', () => {
+test('renders login screen', () => {
 	render(<Base />);
-	const linkElement = screen.getByText(/learn chakra/i);
-	expect(linkElement).toBeInTheDocument();
+	const signInElements = screen.getAllByText(/sign in/i);
+	expect(signInElements.length).toBeGreaterThan(0);
 });
