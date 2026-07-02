@@ -1,21 +1,46 @@
-import { Module } from '@nestjs/common';
+import { Injectable, Module, OnApplicationShutdown } from '@nestjs/common';
 import { MongoClient, Db } from 'mongodb';
 import { AppConfigService } from '../config/appConfig.service';
 
 export const MONGODB = 'MONGODB';
+const MONGO_CLIENT = 'MONGO_CLIENT';
+
+@Injectable()
+class MongoClientService implements OnApplicationShutdown {
+  constructor(private readonly client: MongoClient) {}
+
+  async onApplicationShutdown() {
+    await this.client.close();
+  }
+}
 
 @Module({
   providers: [
     {
-      provide: MONGODB,
+      provide: MONGO_CLIENT,
       inject: [AppConfigService],
-      useFactory: async (appConfig: AppConfigService): Promise<Db> => {
+      useFactory: async (appConfig: AppConfigService): Promise<MongoClient> => {
         const mongoUri = appConfig.get('mongoUri');
+        const client = new MongoClient(mongoUri);
+        await client.connect();
+        return client;
+      },
+    },
+    {
+      provide: MongoClientService,
+      inject: [MONGO_CLIENT],
+      useFactory: (client: MongoClient) => new MongoClientService(client),
+    },
+    {
+      provide: MONGODB,
+      inject: [MONGO_CLIENT, AppConfigService],
+      useFactory: async (
+        client: MongoClient,
+        appConfig: AppConfigService,
+      ): Promise<Db> => {
         const dbName = appConfig.get('mongoDbName');
 
         try {
-          const client = new MongoClient(mongoUri);
-          await client.connect();
           const db = client.db(dbName);
 
           // Create indexes
