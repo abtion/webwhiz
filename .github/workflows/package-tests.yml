@@ -57,7 +57,7 @@ jobs:
         run: yarn test --watch=false
 
       - name: Run backend e2e tests
-        run: yarn test:e2e --forceExit
+        run: yarn test:e2e
 
   test-frontend:
     runs-on: ubuntu-latest

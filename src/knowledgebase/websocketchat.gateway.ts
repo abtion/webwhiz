@@ -6,7 +6,12 @@ import {
   OnGatewayInit,
   SubscribeMessage,
 } from '@nestjs/websockets';
-import { Logger, Inject, forwardRef } from '@nestjs/common';
+import {
+  Logger,
+  Inject,
+  forwardRef,
+  OnApplicationShutdown,
+} from '@nestjs/common';
 import { Socket } from 'socket.io';
 import { Redis } from 'ioredis';
 import { ChatQueryAnswer } from './knowledgebase.schema';
@@ -22,7 +27,11 @@ const SESSION_KB_MAPPING = 'sessionKbMapping';
   },
 })
 export class WebSocketChatGateway
-  implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit
+  implements
+    OnGatewayConnection,
+    OnGatewayDisconnect,
+    OnGatewayInit,
+    OnApplicationShutdown
 {
   @WebSocketServer() server;
   private readonly logger = new Logger(WebSocketChatGateway.name);
@@ -48,6 +57,10 @@ export class WebSocketChatGateway
 
   afterInit() {
     this.logger.log('Websocket gateway initialized.');
+  }
+
+  onApplicationShutdown() {
+    this.redisClient.disconnect();
   }
 
   async handleConnection(socket: Socket) {

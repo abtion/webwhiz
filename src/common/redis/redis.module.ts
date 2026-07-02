@@ -1,8 +1,17 @@
-import { Module } from '@nestjs/common';
+import { Injectable, Module, OnApplicationShutdown } from '@nestjs/common';
 import { AppConfigService } from '../config/appConfig.service';
 import { Redis } from 'ioredis';
 
 export const REDIS = 'REDIS';
+
+@Injectable()
+class RedisCleanupService implements OnApplicationShutdown {
+  constructor(private readonly client: Redis) {}
+
+  async onApplicationShutdown() {
+    this.client.disconnect();
+  }
+}
 
 @Module({
   providers: [
@@ -26,6 +35,11 @@ export const REDIS = 'REDIS';
           throw e;
         }
       },
+    },
+    {
+      provide: RedisCleanupService,
+      inject: [REDIS],
+      useFactory: (client: Redis) => new RedisCleanupService(client),
     },
   ],
   exports: [REDIS],
