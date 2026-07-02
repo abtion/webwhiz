@@ -8,6 +8,8 @@ WORKDIR /usr/src/app
 
 COPY package*.json yarn.lock ./
 
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+
 RUN yarn install
 
 COPY . .
