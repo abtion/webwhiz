@@ -344,7 +344,7 @@ export class OpenaiService {
     // API Call
     try {
       const res = await openAiClient.chat.completions.create(data);
-      const chatResponse = res.choices[0].message.content;
+      const chatResponse = res.choices[0]?.message?.content ?? '';
 
       return {
         response: chatResponse,
@@ -402,43 +402,70 @@ export class OpenaiService {
       data.messages.map((m) => m.content).join(' '),
     );
 
+    let completionStream: AsyncIterable<OpenAI.Chat.ChatCompletionChunk>;
     try {
-      const completionStream = await openAiClient.chat.completions.create(data);
-
-      let answer = '';
-
-      const streamPromise = new Promise(async (res) => {
-        for await (const part of completionStream) {
-          if (part.choices.length === 0) continue;
-
-          const { content } = part.choices[0].delta;
-
-          if (content !== undefined) {
-            observable.next(JSON.stringify({ content }));
-            answer += content;
-          }
-        }
-
-        res(true);
-      });
-
-      streamPromise.then(() => {
-        observable.next('[DONE]');
-        observable.complete();
-        const completionTokens = this.getTokenCount(answer);
-        completeCb?.(answer, {
-          prompt: promptTokens,
-          completion: completionTokens,
-          total: promptTokens + completionTokens,
-        });
-      });
+      completionStream = await openAiClient.chat.completions.create(data);
     } catch (error) {
-      if (APIError.isPrototypeOf(error)) {
+      if (error instanceof APIError) {
         this.logger.error('OpenAI ChatCompletion API error', error);
-        this.logger.error('Error response', error.data);
+        this.logger.error('Error response', error.error);
       }
       throw error;
     }
+
+    // Not awaited: the caller needs the observable before chunks arrive.
+    // forwardCompletionStream never rejects.
+    void this.forwardCompletionStream(
+      completionStream,
+      observable,
+      promptTokens,
+      completeCb,
+    );
+
     return observable;
+  }
+
+  private async forwardCompletionStream(
+    completionStream: AsyncIterable<OpenAI.Chat.ChatCompletionChunk>,
+    observable: Subject<string>,
+    promptTokens: number,
+    completeCb?: (
+      answer: string,
+      usage: ChatGTPResponse['tokenUsage'],
+    ) => Promise<void>,
+  ) {
+    let answer = '';
+
+    try {
+      for await (const part of completionStream) {
+        // Azure sends chunks without `delta` (e.g. content filter results)
+        const content = part.choices?.[0]?.delta?.content;
+        if (content == null) continue;
+
+        observable.next(JSON.stringify({ content }));
+        answer += content;
+      }
+    } catch (error) {
+      this.logger.error('OpenAI ChatCompletion stream error', error);
+      observable.error(new Error('Failed to generate answer'));
+      return;
+    }
+
+    observable.next('[DONE]');
+    observable.complete();
+
+    try {
+      const completionTokens = this.getTokenCount(answer);
+      await completeCb?.(answer, {
+        prompt: promptTokens,
+        completion: completionTokens,
+        total: promptTokens + completionTokens,
+      });
+    } catch (error) {
+      this.logger.error(
+        'OpenAI ChatCompletion completion callback error',
+        error,
+      );
+    }
   }
 }
