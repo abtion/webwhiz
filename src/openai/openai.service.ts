@@ -344,7 +344,7 @@ export class OpenaiService {
     // API Call
     try {
       const res = await openAiClient.chat.completions.create(data);
-      const chatResponse = res.choices[0]?.message?.content;
+      const chatResponse = res.choices[0]?.message?.content ?? '';
 
       return {
         response: chatResponse,
@@ -454,8 +454,8 @@ export class OpenaiService {
     observable.next('[DONE]');
     observable.complete();
 
-    const completionTokens = this.getTokenCount(answer);
     try {
+      const completionTokens = this.getTokenCount(answer);
       await completeCb?.(answer, {
         prompt: promptTokens,
         completion: completionTokens,
