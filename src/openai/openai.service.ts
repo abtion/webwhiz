@@ -406,9 +406,9 @@ export class OpenaiService {
     try {
       completionStream = await openAiClient.chat.completions.create(data);
     } catch (error) {
-      if (APIError.isPrototypeOf(error)) {
+      if (error instanceof APIError) {
         this.logger.error('OpenAI ChatCompletion API error', error);
-        this.logger.error('Error response', error.data);
+        this.logger.error('Error response', error.error);
       }
       throw error;
     }
