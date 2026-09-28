@@ -55,6 +55,29 @@ describe('OpenaiService', () => {
       completeCb,
     );
 
+  describe('getChatGptCompletion', () => {
+    it.each([
+      ['no choices', []],
+      [
+        'a filtered choice without message',
+        [{ index: 0, finish_reason: 'content_filter' }],
+      ],
+      [
+        'a null message content',
+        [{ index: 0, message: { role: 'assistant', content: null } }],
+      ],
+    ])('returns an empty response for %s', async (_, choices) => {
+      create.mockResolvedValue({ choices, usage: undefined });
+
+      const result = await service.getChatGptCompletion({
+        messages: [{ role: 'user', content: 'Hi' }],
+        model: 'gpt-4o',
+      });
+
+      expect(result.response).toBe('');
+    });
+  });
+
   describe('getChatGptCompletionStream', () => {
     it('skips chunks without delta, such as Azure content filter chunks', async () => {
       create.mockResolvedValue(
